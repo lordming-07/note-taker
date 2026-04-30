@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, menu} = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 
@@ -19,11 +19,53 @@ function createWindow() {
 app.whenReady().then(() => {
 
     createWindow();
+     const template =[
+        {
+            label:'File',
+            submenu:[
+                {
+                    label:'New Note',
+                    accelerator: 'CmdOrCtrl+N',
+                    click:() => {
+                        BrowserWindow.getFocusedWindow().webContents.send('menu-new-note');
+                    }
+                },
+                {
+                    label:'open File',
+                    accelerator: 'CmdOrCtrl+O',
+                    click:() => {
+                      BrowserWindow.getFocusedWindow().webContents.send('menu-open-file');
+                    }
+                },
+                 {
+                    label:'Save',
+                    accelerator: 'CmdOrCtrl+S',
+                    click:() => {
+                        BrowserWindow.getFocusedWindow().webContents.send('menu-save');
+                    }
+                },
+                 {
+                    label:'Save As',
+                    accelerator: 'CmdOrCtrl+Shift+S',
+                    click:() => {
+                        BrowserWindow.getFocusedWindow().webContents.send('menu-save-as');
+                    }
+                },
+                 { type:'separator'},
+                 {
+                    label:'Quit',
+                    accelerator: 'CmdOrCtrl+Q',
+                    click:() => app.quit()
+                }
+              
+            ]
+        }
+    ];
 
-    ipcMain.handle('save-note', async (event, text) => {
-        const filePath = path.join(app.getPath('documents'), 'quicknote.txt');
-        fs.writeFileSync(filePath, text);
-        return { success: true };
+    ipcMain.handle('smart-save', async (event, text, filepath) => {
+        const targetPath = filepath || path.join(app.getPath('documents'), 'quicknote.txt');
+        fs.writeFileSync(targetPath, text,'utf-8');
+        return { success: true ,filePath: targetPath};
     });
 
     ipcMain.handle('load-note', async () => {
@@ -65,4 +107,5 @@ app.whenReady().then(() => {
         const content = fs.readFileSync(filePath, 'utf-8');
         return { success: true, content };
     });
+   
 });
